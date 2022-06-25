@@ -1,0 +1,316 @@
+<!DOCTYPE HTML>
+<head>
+    <title>字串大師</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+    <meta HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE" />
+    <link rel="SHORTCUT ICON" href="steak.png" />
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: '微軟正黑體', Verdana;
+            font-size: 18px;
+            color: black;
+            background-color: rgb(240, 230, 230);
+        }
+        input,
+        button {
+            background-color: #FFCACA;
+            border-radius: 4px;
+        }
+        input[type="button"],
+        button {
+            padding: 10px 10px;
+            margin: 10px 0;
+            background-color: orange;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 200px;
+        }
+        textarea {
+            border: 1px solid orange;
+            border-radius: 4px;
+            margin: 6px 0;
+            padding: 10px;
+            overflow: auto;
+        }
+        iframe {
+            width: 100%;
+        }
+        code {
+            white-space: pre;
+            font-family: Consolas;
+        }
+        .hide {
+            display: none;
+        }
+        #inputAreaDiv {
+            height: 85%;
+            width: 25%;
+            float: left;
+            padding: 10px;
+        }
+        #spliterDiv {
+            margin: 45px 10px;
+            float: left;
+            padding: 0px 6px 0 6px;
+            text-align: center;
+        }
+        #outputAreaDiv {
+            height: 85%;
+            width: 55%;
+            float: left;
+            padding: 10px;
+            overflow: auto;
+            font-family: Verdana;
+            line-height: 1.2em;
+        }
+        #outputArea {
+            height: 100%;
+            width: 100%;
+            font-size: 18px;
+        }
+        #notify {
+            position: absolute;
+            top: 10px;
+            left: 45%;
+            color: #fff;
+            background-color: #333;
+            padding: 6px 12px;
+            border-radius: 4px;
+            opacity: 0.7;
+        }
+        /*prettify code css*/
+        .pln {
+            color: #800;
+        }
+        .str {
+            color: #080;
+        }
+        .kwd {
+            color: #008;
+        }
+        .com {
+            color: #800;
+        }
+        .typ {
+            color: #606;
+        }
+        .lit {
+            color: red;
+        }
+        .clo,
+        .opn,
+        .pun {
+            color: #484800;
+        }
+        .tag {
+            color: #008;
+        }
+        .atn {
+            color: #606;
+        }
+        .atv {
+            color: #066;
+        }
+        .dec,
+        .var {
+            color: #606;
+        }
+        .fun {
+            color: red;
+        }
+        ol.linenums {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        li.L0,
+        li.L1,
+        li.L2,
+        li.L3,
+        li.L5,
+        li.L6,
+        li.L7,
+        li.L8 {
+            list-style-type: none;
+        }
+        li.L1,
+        li.L3,
+        li.L5,
+        li.L7,
+        li.L9 {
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+    <div id="inputAreaDiv">
+        <div>
+            <textarea id="inputArea" style="width:100%">/**
+ * %t%2
+ */
+private String %1;
+</textarea>
+        </div>
+        <div style="height:45%">
+            <textarea id="inputText" style="height:100%;width:100%">aaa
+bbb
+ccc
+ddd</textarea>
+        </div>
+        <br>
+        <div style="height:45%">
+            <textarea id="inputText2" style="height:100%;width:100%">111
+222
+333
+444</textarea>
+        </div>
+    </div>
+    <div id="spliterDiv">
+        <input type="button" id="verticalFactory" name="button" value="動態取代" onclick="Union()" /><br>
+        <input type="button" id="" name="button" value="Json格式" onclick="jsonVisualize()" />
+        <br />
+        <input type="button" id="" name="button" value="Xml格式" onclick="xmlVisualize()" />
+        <br />
+        <input type="button" id="" name="button" value="自動格式" onclick="autoVisualize()" />
+    </div>
+    <div id="outputAreaDiv">
+        <div>
+            <button type="button" id="copyOutput">Copy</button>
+        </div>
+        <code id="outputArea" class="prettyprint">
+        </code>
+    </div>
+    <div id="notify"></div>
+</body>
+<script type="text/javascript" src="index.js"></script>
+<script type="text/javascript">
+    $(function () {
+        jQuery.fn.selectText = function () {
+            this.find('input').each(function () {
+                if ($(this).prev().length == 0 || !$(this).prev().hasClass('p_copy')) {
+                    $('<p class="p_copy" style="position: absolute; z-index: -1;"></p>').insertBefore($(this));
+                }
+                $(this).prev().html($(this).val());
+            });
+            var doc = document;
+            var element = this[0];
+            console.log(this, element);
+            if (doc.body.createTextRange) {
+                var range = document.body.createTextRange();
+                range.moveToElementText(element);
+                range.select();
+            } else if (window.getSelection) {
+                var selection = window.getSelection();
+                var range = document.createRange();
+                range.selectNodeContents(element);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        };
+        $('#inputText').on('paste', function (e) {
+            e.preventDefault();
+            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            window.document.execCommand('insertText', false, text);
+            autoVisualize();
+        }).on('keyup', function (event) {
+            var evtobj = window.event ? event : e
+            if (evtobj.keyCode == 90 && evtobj.ctrlKey) {
+                autoVisualize();
+            };
+        });
+        $("#copyOutput").click(function () {
+            const content = $("#outputArea");
+            content.selectText();
+            var isCopied = document.execCommand('copy');
+            if (isCopied)
+                notify("已複製");
+        });
+        $('#verticalFactory').trigger('click');
+    });
+    function Union() {
+        notify('Generate Vertical String');
+        try {
+            const inputArea = $('#inputArea').val();
+            const inputText = $('#inputText').val();
+            const inputText2 = $('#inputText2').val();
+            const inputText2s = inputText2.split("\n");
+            var output = '';
+            $.each(inputText.split("\n"), function (idx, item) {
+                if (item.trim() != "") {
+                    var pt = "";
+                    var p1 = item.toString();
+                    var p2 = "";
+                    if (item.indexOf("\t") >= 0) {
+                        const slot = item.split("\t");
+                        p1 = slot[0];
+                        pt = slot[1];
+                    }
+                    if (inputText2s.length - 1 >= idx) {
+                        p2 = inputText2s[idx];
+                    }
+                    output += inputArea.replace(/\%1/g, p1).replace(/\%t/g, pt).replace(/\%2/g, p2) + "<br/>";
+                }
+            });
+            $('#outputArea').html(output);
+            $('#outputArea').removeClass('prettyprinted');
+            prettyPrint();
+        } catch (ex) {
+            errlog(ex.message);
+        }
+    }
+    function autoVisualize() {
+        var t = $('#inputText').val().trimStart();
+        if (t.indexOf("{") == 0) {
+            console.log("json")
+            jsonVisualize();
+        }
+        else if (t.indexOf("<") == 0) {
+            console.log("xml")
+            xmlVisualize();
+        }
+        else {
+            notify('Unknown format')
+        }
+    }
+    function jsonVisualize() {
+        notify('JSON')
+        var t = $('#inputText').val();
+        try {
+            var jsonRst = vkbeautify.json(t);
+            $('#outputArea').html(jsonRst);
+            $('#outputArea').removeClass('prettyprinted');
+            prettyPrint();
+        } catch (ex) {
+            errlog(ex.message);
+        }
+    }
+    // vkbeautify
+    function xmlVisualize() {
+        notify('XML')
+        try {
+            var formatXmlStr = vkbeautify.xml($('#inputText').val());
+            var htmlRst = $('<div/>').text(formatXmlStr).html();
+            $('#outputArea').html(htmlRst);
+            $('#outputArea').removeClass('prettyprinted');
+            prettyPrint();
+        } catch (ex) {
+            errlog(ex.message);
+        }
+    }
+    function errlog(errlog) {
+        notify('Error')
+        $('#outputArea').html('<span style=color:red>' + errlog + '</span>');
+    }
+    function notify(msg) {
+        $('#notify').hide().html(msg).fadeIn(600);
+        setTimeout(() => {
+            $('#notify').fadeOut();
+        }, 3000);
+    }
+</script>
+</html>
