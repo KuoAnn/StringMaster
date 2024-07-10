@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="SHORTCUT ICON" href="icon.png" />
     <title>String Master</title>
     <style>
@@ -25,11 +25,18 @@
 
         .left,
         .right {
-            flex: 0 0 calc(50% - 30px);
             padding: 6px;
             box-sizing: border-box;
             height: 100%;
             overflow: auto;
+        }
+
+        .left {
+            flex: 0 0 calc(40% - 30px);
+        }
+
+        .right {
+            flex: 0 0 calc(60% - 30px);
         }
 
         .middle {
@@ -55,6 +62,8 @@
             height: calc(100% - 6px);
             overflow: auto;
             box-sizing: border-box;
+            border: 1px solid #666;
+            border-radius: 4px;
         }
 
         #copyButton {
