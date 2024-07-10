@@ -32,19 +32,12 @@
         }
 
         .left {
-            flex: 0 0 calc(40% - 30px);
+            flex: 0 0 45%;
         }
 
         .right {
-            flex: 0 0 calc(60% - 30px);
-        }
-
-        .middle {
-            flex: 0 0 60px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            flex: 0 0 55%;
+            position: relative;
         }
 
         textarea {
@@ -67,17 +60,19 @@
         }
 
         #copyButton {
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
             border: none;
-            border-radius: 5px;
+            font-size: 24px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            opacity: 0.7;
+            transition: opacity 0.3s;
         }
 
         #copyButton:hover {
-            background-color: #45a049;
+            opacity: 1;
         }
 
         .string {
@@ -129,11 +124,6 @@
                 flex: 1;
                 height: 50%;
             }
-
-            .middle {
-                flex: 0 0 40px;
-                padding: 0;
-            }
         }
     </style>
 </head>
@@ -144,11 +134,9 @@
         <div class="left">
             <textarea id="input" placeholder="Paste JSON or XML String"></textarea>
         </div>
-        <div class="middle">
-            <button id="copyButton">Copy</button>
-        </div>
         <div class="right">
             <div id="output"></div>
+            <button id="copyButton" title="Copy">📋</button>
         </div>
     </div>
 
@@ -231,7 +219,13 @@
         }
 
         function copyOutput() {
-            navigator.clipboard.writeText(output.textContent).then(() => notify("Copied!"));
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                notify("Copied!");
+                copyButton.textContent = '✅';
+                setTimeout(() => {
+                    copyButton.textContent = '📋';
+                }, 3000);
+            });
         }
 
         function notify(msg) {
@@ -277,7 +271,6 @@
 
             requestAnimationFrame(animateFadeOut);
         }
-
     </script>
 </body>
 
