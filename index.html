@@ -157,9 +157,9 @@
         const output = document.getElementById('output');
         const copyButton = document.getElementById('copyButton');
 
-        window.addEventListener('load', loadAndFormat);
-        input.addEventListener('input', formatAndSave);
         copyButton.addEventListener('click', copyOutput);
+        input.addEventListener('input', formatAndSave);
+        window.addEventListener('load', loadAndFormat);
 
         function formatAndSave() {
             const text = input.value.trim();
@@ -175,26 +175,15 @@
             }
         }
 
-        function formatInput() {
-            const text = input.value.trim();
+        function formatInput(text) {
             if (text === '') {
-                output.innerHTML = '';
+                output.textContent = '';
                 return;
             }
-
             try {
-                if (text.startsWith('<')) {
-                    // XML
-                    const formatted = formatXML(text);
-                    output.innerHTML = syntaxHighlightXML(formatted);
-                } else {
-                    // JSON
-                    const obj = JSON.parse(text);
-                    const formatted = JSON.stringify(obj, null, 4);
-                    output.innerHTML = syntaxHighlightJSON(formatted);
-                }
+                output.innerHTML = text.startsWith('<') ? syntaxHighlightXML(formatXML(text)) : syntaxHighlightJSON(JSON.stringify(JSON.parse(text), null, 4));
             } catch (e) {
-                output.textContent = text;
+                output.textContent = 'Error formatting text\n' + text;
             }
         }
 
@@ -242,25 +231,14 @@
         }
 
         function copyOutput() {
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = output.textContent;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-
-            notify("Copied!")
+            navigator.clipboard.writeText(output.textContent).then(() => notify("Copied!"));
         }
 
         function notify(msg) {
             const notifyElement = document.getElementById('notify');
-            notifyElement.style.display = 'none';
-            notifyElement.innerHTML = msg;
+            notifyElement.textContent = msg;
             fadeIn(notifyElement, 600);
-
-            setTimeout(() => {
-                fadeOut(notifyElement, 600);
-            }, 3000);
+            setTimeout(() => fadeOut(notifyElement, 600), 3000);
         }
 
         function fadeIn(element, duration, opacity = 0.7) {
