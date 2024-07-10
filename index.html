@@ -50,7 +50,6 @@
 
         #output {
             white-space: pre;
-            background-color: #f4f4f4;
             padding: 10px;
             height: calc(100% - 6px);
             overflow: auto;
@@ -73,6 +72,49 @@
 
         #copyButton:hover {
             opacity: 1;
+        }
+
+        #notify {
+            position: absolute;
+            top: 10px;
+            left: calc(50% - 30px);
+            color: #fff;
+            background-color: #333;
+            padding: 6px 12px;
+            border-radius: 4px;
+            opacity: 0;
+        }
+
+        #darkModeToggle {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        #darkModeToggle:hover {
+            opacity: 1;
+        }
+
+        /* Light mode styles */
+        body {
+            background-color: #fff;
+            color: #000;
+        }
+
+        textarea {
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #ccc;
+        }
+
+        #output {
+            background-color: #f4f4f4;
         }
 
         .string {
@@ -103,15 +145,48 @@
             color: #ff0000;
         }
 
-        #notify {
-            position: absolute;
-            top: 10px;
-            left: calc(50% - 30px);
-            color: #fff;
-            background-color: #333;
-            padding: 6px 12px;
-            border-radius: 4px;
-            opacity: 0;
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        body.dark-mode textarea {
+            background-color: #2d2d2d;
+            color: #d4d4d4;
+            border: 1px solid #555;
+        }
+
+        body.dark-mode #output {
+            background-color: #2d2d2d;
+        }
+
+        body.dark-mode .string {
+            color: #ce9178;
+        }
+
+        body.dark-mode .number {
+            color: #b5cea8;
+        }
+
+        body.dark-mode .boolean {
+            color: #569cd6;
+        }
+
+        body.dark-mode .null {
+            color: #569cd6;
+        }
+
+        body.dark-mode .key {
+            color: #9cdcfe;
+        }
+
+        body.dark-mode .tag {
+            color: #569cd6;
+        }
+
+        body.dark-mode .attr {
+            color: #9cdcfe;
         }
 
         @media (max-width: 769px) {
@@ -137,6 +212,7 @@
         <div class="right">
             <div id="output"></div>
             <button id="copyButton" title="Copy">📋</button>
+            <button id="darkModeToggle" title="Toggle Dark Mode">🌓</button>
         </div>
     </div>
 
@@ -144,10 +220,12 @@
         const input = document.getElementById('input');
         const output = document.getElementById('output');
         const copyButton = document.getElementById('copyButton');
+        const darkModeToggle = document.getElementById('darkModeToggle');
 
         copyButton.addEventListener('click', copyOutput);
         input.addEventListener('input', formatAndSave);
         window.addEventListener('load', loadAndFormat);
+        darkModeToggle.addEventListener('click', toggleDarkMode);
 
         function formatAndSave() {
             const text = input.value.trim();
@@ -160,6 +238,12 @@
             if (savedText) {
                 input.value = savedText;
                 formatInput(savedText);
+            }
+
+            // Load dark mode preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = '🌞';
             }
         }
 
@@ -270,6 +354,17 @@
             }
 
             requestAnimationFrame(animateFadeOut);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                darkModeToggle.textContent = '🌞';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                darkModeToggle.textContent = '🌓';
+                localStorage.setItem('darkMode', 'false');
+            }
         }
     </script>
 </body>
