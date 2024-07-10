@@ -129,8 +129,23 @@
         const output = document.getElementById('output');
         const copyButton = document.getElementById('copyButton');
 
-        input.addEventListener('input', formatInput);
+        window.addEventListener('load', loadAndFormat);
+        input.addEventListener('input', formatAndSave);
         copyButton.addEventListener('click', copyOutput);
+
+        function formatAndSave() {
+            const text = input.value.trim();
+            localStorage.setItem('lastInput', text);
+            formatInput(text);
+        }
+
+        function loadAndFormat() {
+            const savedText = localStorage.getItem('lastInput');
+            if (savedText) {
+                input.value = savedText;
+                formatInput(savedText);
+            }
+        }
 
         function formatInput() {
             const text = input.value.trim();
