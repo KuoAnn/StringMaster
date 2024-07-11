@@ -222,9 +222,9 @@
         const copyButton = document.getElementById('copyButton');
         const darkModeButton = document.getElementById('darkModeButton');
 
-        copyButton.addEventListener('click', copyOutput);
         input.addEventListener('input', formatAndSave);
         window.addEventListener('load', loadAndFormat);
+        copyButton.addEventListener('click', copyOutput);
         darkModeButton.addEventListener('click', toggleDarkMode);
 
         function formatAndSave() {
@@ -257,50 +257,58 @@
             } catch (e) {
                 output.textContent = 'Error formatting text\n' + text;
             }
-        }
 
-        function formatXML(xml) {
-            let formatted = '';
-            let indent = '';
-            const tab = '    ';
-            xml.split(/>\s*</).forEach(function (node) {
-                if (node.match(/^\/\w/)) {
-                    indent = indent.substring(tab.length);
-                }
-                formatted += indent + '<' + node + '>\r\n';
-                if (node.match(/^<?\w[^>]*[^\/]$/) && !node.startsWith("?") && !node.startsWith("/")) {
-                    indent += tab;
-                }
-            });
-            return formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
-        }
-
-        function syntaxHighlightJSON(json) {
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                let cls = 'number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'key';
-                    } else {
-                        cls = 'string';
+            function syntaxHighlightJSON(json) {
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'key';
+                        } else {
+                            cls = 'string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
                     }
-                } else if (/true|false/.test(match)) {
-                    cls = 'boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'null';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            }
+
+            function syntaxHighlightXML(xml) {
+                return xml
+                    .replace(/(&lt;)([^&!\s>]+)([^>]*?)(&gt;)/g, function (match, p1, p2, p3, p4) {
+                        let attributes = p3.replace(/(\w+)\s*=\s*(".*?")/g, '<span class="attr">$1</span>=<span class="string">$2</span>');
+                        return p1 + '<span class="tag">' + p2 + '</span>' + attributes + p4;
+                    })
+                    .replace(/(&lt;\/?)([^&>]+)(&gt;)/g, '$1<span class="tag">$2</span>$3');
+            }
         }
 
-        function syntaxHighlightXML(xml) {
-            return xml
-                .replace(/(&lt;)([^&!\s>]+)([^>]*?)(&gt;)/g, function (match, p1, p2, p3, p4) {
-                    let attributes = p3.replace(/(\w+)\s*=\s*(".*?")/g, '<span class="attr">$1</span>=<span class="string">$2</span>');
-                    return p1 + '<span class="tag">' + p2 + '</span>' + attributes + p4;
-                })
-                .replace(/(&lt;\/?)([^&>]+)(&gt;)/g, '$1<span class="tag">$2</span>$3');
-        }
+        var formatXML = function (sourceXml) {
+            var xmlDoc = new DOMParser().parseFromString(sourceXml, 'application/xml');
+            var xsltDoc = new DOMParser().parseFromString([
+                // describes how we want to modify the XML - indent everything
+                '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">',
+                '  <xsl:strip-space elements="*"/>',
+                '  <xsl:template match="para[content-style][not(text())]">', // change to just text() to strip space in text nodes
+                '    <xsl:value-of select="normalize-space(.)"/>',
+                '  </xsl:template>',
+                '  <xsl:template match="node()|@*">',
+                '    <xsl:copy><xsl:apply-templates select="node()|@*"/></xsl:copy>',
+                '  </xsl:template>',
+                '  <xsl:output indent="yes"/>',
+                '</xsl:stylesheet>',
+            ].join('\n'), 'application/xml');
+
+            var xsltProcessor = new XSLTProcessor();
+            xsltProcessor.importStylesheet(xsltDoc);
+            var resultDoc = xsltProcessor.transformToDocument(xmlDoc);
+            var resultXml = new XMLSerializer().serializeToString(resultDoc);
+            console.log(resultXml)
+            return resultXml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
 
         function copyOutput() {
             navigator.clipboard.writeText(output.textContent).then(() => {
@@ -312,50 +320,6 @@
             });
         }
 
-        function notify(msg) {
-            const notifyElement = document.getElementById('notify');
-            notifyElement.textContent = msg;
-            fadeIn(notifyElement, 600);
-            setTimeout(() => fadeOut(notifyElement, 600), 3000);
-        }
-
-        function fadeIn(element, duration, opacity = 0.7) {
-            element.style.opacity = 0;
-            element.style.display = 'block';
-
-            let start = null;
-
-            function animateFadeIn(timestamp) {
-                if (!start) start = timestamp;
-                let progress = timestamp - start;
-                element.style.opacity = Math.min(progress / duration, opacity);
-                if (progress < duration) {
-                    requestAnimationFrame(animateFadeIn);
-                }
-            }
-
-            requestAnimationFrame(animateFadeIn);
-        }
-
-        function fadeOut(element, duration, opacity = 0.7) {
-            element.style.opacity = opacity;
-
-            let start = null;
-
-            function animateFadeOut(timestamp) {
-                if (!start) start = timestamp;
-                let progress = timestamp - start;
-                element.style.opacity = 1 - Math.min(progress / duration, 1);
-                if (progress < duration) {
-                    requestAnimationFrame(animateFadeOut);
-                } else {
-                    element.style.display = 'none';
-                }
-            }
-
-            requestAnimationFrame(animateFadeOut);
-        }
-
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             if (document.body.classList.contains('dark-mode')) {
@@ -364,6 +328,50 @@
             } else {
                 darkModeButton.textContent = '🌓';
                 localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        function notify(msg) {
+            const notifyElement = document.getElementById('notify');
+            notifyElement.textContent = msg;
+            fadeIn(notifyElement, 600);
+            setTimeout(() => fadeOut(notifyElement, 600), 3000);
+
+            function fadeIn(element, duration, opacity = 0.7) {
+                element.style.opacity = 0;
+                element.style.display = 'block';
+
+                let start = null;
+
+                function animateFadeIn(timestamp) {
+                    if (!start) start = timestamp;
+                    let progress = timestamp - start;
+                    element.style.opacity = Math.min(progress / duration, opacity);
+                    if (progress < duration) {
+                        requestAnimationFrame(animateFadeIn);
+                    }
+                }
+
+                requestAnimationFrame(animateFadeIn);
+            }
+
+            function fadeOut(element, duration, opacity = 0.7) {
+                element.style.opacity = opacity;
+
+                let start = null;
+
+                function animateFadeOut(timestamp) {
+                    if (!start) start = timestamp;
+                    let progress = timestamp - start;
+                    element.style.opacity = 1 - Math.min(progress / duration, 1);
+                    if (progress < duration) {
+                        requestAnimationFrame(animateFadeOut);
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
+
+                requestAnimationFrame(animateFadeOut);
             }
         }
     </script>
