@@ -42,7 +42,7 @@
 
         textarea {
             width: 100%;
-            height: calc(100% - 6px);
+            height: calc(100% - 40px); /* 修改高度以容納替換區域 */
             resize: none;
             padding: 10px;
             box-sizing: border-box;
@@ -100,6 +100,33 @@
 
         #darkModeButton:hover {
             opacity: 1;
+        }
+
+        .replace-container {
+            display: flex;
+            margin-top: 6px;
+            gap: 8px;
+            padding: 0 2px;
+        }
+
+        #replaceText {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #replaceButton {
+            padding: 6px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #replaceButton:hover {
+            background-color: #45a049;
         }
 
         /* Light mode styles */
@@ -190,9 +217,23 @@
             color: #9cdcfe;
         }
 
-       body.dark-mode #notify {
+        body.dark-mode #notify {
             color: #333;
             background-color: #fff;
+        }
+
+        body.dark-mode #replaceText {
+            background-color: #2d2d2d;
+            color: #d4d4d4;
+            border: 1px solid #555;
+        }
+
+        body.dark-mode #replaceButton {
+            background-color: #388e3c;
+        }
+
+        body.dark-mode #replaceButton:hover {
+            background-color: #2e7d32;
         }
 
         @media (max-width: 769px) {
@@ -214,6 +255,10 @@
         <div id="notify"></div>
         <div class="left">
             <textarea id="input" placeholder="Paste JSON or XML String"></textarea>
+            <div class="replace-container">
+                <input type="text" id="replaceText" placeholder="輸入替換文字">
+                <button id="replaceButton">取代 %1</button>
+            </div>
         </div>
         <div class="right">
             <div id="output"></div>
@@ -227,11 +272,14 @@
         const output = document.getElementById('output');
         const copyButton = document.getElementById('copyButton');
         const darkModeButton = document.getElementById('darkModeButton');
+        const replaceText = document.getElementById('replaceText');
+        const replaceButton = document.getElementById('replaceButton');
 
         input.addEventListener('input', formatAndSave);
         window.addEventListener('load', loadAndFormat);
         copyButton.addEventListener('click', copyOutput);
         darkModeButton.addEventListener('click', toggleDarkMode);
+        replaceButton.addEventListener('click', performReplace);
 
         function formatAndSave() {
             const text = input.value.trim();
@@ -259,7 +307,22 @@
                 return;
             }
             try {
-                output.innerHTML = text.startsWith('<') ? syntaxHighlightXML(formatXML(text)) : syntaxHighlightJSON(JSON.stringify(JSON.parse(text), null, 4));
+                // 處理可能存在的 URL 編碼
+                let formattedText = text;
+                if (text.startsWith('<')) {
+                    // XML 格式處理
+                    output.innerHTML = syntaxHighlightXML(formatXML(formattedText));
+                } else {
+                    // JSON 格式處理
+                    try {
+                        // 嘗試解析 JSON
+                        const parsed = JSON.parse(formattedText);
+                        output.innerHTML = syntaxHighlightJSON(JSON.stringify(parsed, null, 4));
+                    } catch (e) {
+                        // 如果解析失敗，直接顯示原始文字
+                        output.textContent = formattedText;
+                    }
+                }
             } catch (e) {
                 output.textContent = 'Error formatting text\n' + text;
             }
@@ -334,6 +397,15 @@
                 darkModeButton.textContent = '🌓';
                 localStorage.setItem('darkMode', 'false');
             }
+        }
+
+        function performReplace() {
+            const replacement = replaceText.value;
+            const currentText = input.value;
+            const newText = currentText.replace(/%1/g, replacement);
+            input.value = newText;
+            formatAndSave();
+            notify("Done");
         }
 
         function notify(msg) {
