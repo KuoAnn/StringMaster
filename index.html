@@ -114,6 +114,8 @@
             padding: 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            min-height: 60px;
+            resize: vertical;
         }
 
         #replaceButton {
@@ -254,9 +256,9 @@
     <div class="container">
         <div id="notify"></div>
         <div class="left">
-            <textarea id="input" placeholder="Paste JSON or XML String"></textarea>
+            <textarea id="input" placeholder="輸入文字模板，使用 %1 作為替換標記"></textarea>
             <div class="replace-container">
-                <input type="text" id="replaceText" placeholder="輸入替換文字">
+                <textarea id="replaceText" placeholder="輸入替換文字，每行將產生一份複本"></textarea>
                 <button id="replaceButton">取代 %1</button>
             </div>
         </div>
@@ -400,10 +402,27 @@
         }
 
         function performReplace() {
-            const replacement = replaceText.value;
+            const replacements = replaceText.value.split('\n');
             const currentText = input.value;
-            const newText = currentText.replace(/%1/g, replacement);
-            input.value = newText;
+            let result = '';
+            
+            // 針對每一行替換文字建立一份複本
+            replacements.forEach((replacement, index) => {
+                // 只有在非空行時進行處理
+                if (replacement.trim() !== '') {
+                    // 為每份複本進行替換
+                    const newText = currentText.replace(/%1/g, replacement);
+                    result += newText;
+                    
+                    // 如果不是最後一行且沒有以換行結束，則添加換行
+                    if (index < replacements.length - 1 && !newText.endsWith('\n')) {
+                        result += '\n';
+                    }
+                }
+            });
+            
+            // 更新輸入區域並觸發格式化
+            input.value = result;
             formatAndSave();
             notify("Done");
         }
